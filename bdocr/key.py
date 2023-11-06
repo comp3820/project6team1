@@ -1,0 +1,3 @@
+
+API_KEY = "6zLG6zy0u6hTgy8Eojq9TOsn"
+SECRET_KEY = "p4NENLCxuGhMY8wezBMd1RdjbNcQ4SWi"

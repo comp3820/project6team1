@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% macro render_dict(value) %}
+    {% if value is mapping %}
+        <ul>
+        {% for subkey, subvalue in value.items() %}
+            <li><b>{{ subkey }}</b>: {{ render_dict(subvalue) }}</li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        {{ value }}
+    {% endif %}
+{% endmacro %}
+
+{% block content %}
+    <div style="width: 100%; height: 85vh; left: 0; top: 15vh; padding: 5px; position: absolute; overflow-y: auto">
+        {% if data is defined %}
+            <h2>Patient Information</h2>
+            <ul>
+                {% for i, page in enumerate(data.info) %}
+                    <h3>{{ 'Page ' + str(i + 1) }}</h3>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <img src="{{ page.path.replace('\\', '/') }}" alt="Record Image" class="img-fluid rounded mb-4">
+                        </div>
+                        <div class="col-md-6">
+                            {% for info in page.data %}
+                                <li>
+                                    {% for key, value in info.items() %}
+                                        <p><b>{{ key }}</b>: 
+                                        {{ render_dict(value) }}
+                                        </p>
+                                    {% endfor %}
+                                </li>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </ul>
+            <h2>Records</h2>
+            <!-- Create the tabs -->
+            <ul class="nav nav-tabs" id="recordTabs" role="tablist">
+                {% for record, paths in data.records.items() %}
+                    {% set safe_record = record.replace('/', '-') %}
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link {% if loop.first %}active{% endif %}" id="tab-{{ safe_record }}" data-bs-toggle="tab" data-bs-target="#content-{{ safe_record }}" type="button" role="tab" aria-controls="content-{{ safe_record }}" aria-selected="{% if loop.first %}true{% else %}false{% endif %}">
+                            {{ record }}
+                        </button>
+                    </li>
+                {% endfor %}
+            </ul>
+            <!-- Create the tab content -->
+            <div class="tab-content" id="recordTabsContent">
+                {% for record, paths in data.records.items() %}
+                    {% set safe_record = record.replace('/', '-') %}
+                    <div class="tab-pane fade {% if loop.first %}show active{% endif %}" id="content-{{ safe_record }}" role="tabpanel" aria-labelledby="tab-{{ safe_record }}">
+                        {% for path in paths %}
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <img id="image-{{ safe_record }}-{{ loop.index }}" src="{{ path[0].replace('\\', '/') }}" alt="Record Image" class="img-fluid rounded mb-4">
+                                </div>
+                                <div class="col-md-6" style="white-space: pre-line;">
+                                    {{ path[1] }}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+            </div>
+            {% block action %}{% endblock %}
+        {% else %}
+            <div class="d-flex justify-content-center align-items-center flex-column" style="height: 100%;">
+                <img src="/static/images/text.png" alt="Empty" style="width: 150px; height: 150px;" id="upload-image">
+                <div class="text-primary text-center font-weight-bold mt-3">Please go to the Scan page to upload your file first.</div>
+            </div>
+        {% endif %}
+    </div>
+    <script>
+        window.onload = function() {
+            // Get the hash from the URL
+            var hash = window.location.hash.substring(1); // "25/8/23-1"
+        
+            // Split the hash into the tab and image parts
+            var parts = hash.split('-'); // ["25/8/23", "1"]
+        
+            // The tab is the first part, but we need to replace slashes with dashes
+            var tab = parts[0].replace(/\//g, '-'); // "25-8-23"
+        
+            // The image is the second part, but we need to subtract 1 because arrays are 0-indexed
+            var image = parts[1] - 1; // 0
+        
+            // Use Bootstrap's tab method to show the correct tab
+            $('#tab-' + tab).tab('show');
+        
+            // Scroll to the correct image
+            var imageElement = document.getElementById('image-' + tab + '-' + (image + 1));
+            if (imageElement) {
+                imageElement.scrollIntoView();
+            }
+        };
+        </script>        
+{% endblock %}

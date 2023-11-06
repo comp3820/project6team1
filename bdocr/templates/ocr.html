@@ -1,0 +1,44 @@
+{% extends "patient_base.html" %}
+
+{% block action %}
+<div class="d-flex justify-content-center gap-2">
+    <div class="mb-3 col-md-8">
+        <label for="nameInput" class="form-label">Name to save:</label>
+        <input type="text" class="form-control" id="nameInput" placeholder="Enter name">
+    </div>
+</div>
+
+<div class="d-flex justify-content-center gap-2">
+    <button id="saveButton" type="button" class="btn btn-primary">Save</button>
+    <button id="cancelButton" type="button" class="btn btn-secondary">Cancel</button>
+</div>
+
+<script>
+document.getElementById('saveButton').addEventListener('click', function() {
+    var name = document.getElementById('nameInput').value;
+    fetch('/ocr_save', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name: name })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            window.location.replace('/history');
+        }
+    })
+    .catch((error) => {
+      console.error('Error:', error);
+    });
+});
+
+document.getElementById('cancelButton').addEventListener('click', function() {
+    fetch('/ocr_cancel').then(response => response.json()).then(data => {
+        window.location.href = '/scan';
+    })
+});
+</script>
+
+{% endblock %}

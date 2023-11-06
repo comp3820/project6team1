@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+    #container {
+        height: 85vh;
+    }
+    .input-wrapper {
+        position: relative;
+        cursor: pointer;
+    }
+
+    input[type="file"] {
+        display: none;
+    }
+
+    .selected-files {
+        margin-top: 20px;
+    }
+
+    .submit-button {
+        margin-top: 20px;
+        display: flex;
+        justify-content: center;
+        width: 100%;
+    }
+
+    .loading-spinner {
+        display: none;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+</style>
+
+<div class="d-flex align-items-center justify-content-center" id="container">
+    <form id="upload-form" method="POST" enctype="multipart/form-data">
+        <div class="input-wrapper">
+            <input type="file" id="file-input" name="file[]" accept=".pdf" multiple>
+            <img src="/static/images/docs.png" alt="Upload PDF" style="width: 150px; height: 150px;" id="upload-image">
+        </div>
+        <div class="text-primary text-center font-weight-bold mt-3" style="text-align: center;">Uploading files</div>
+        <div class="selected-files" id="selected-files"></div>
+        <div class="submit-button">
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </div>
+    </form>
+    <div class="loading-spinner" id="loading-spinner">
+        <div class="spinner-border text-primary" role="status">
+            <span class="sr-only">Loading...</span>
+        </div>
+    </div>
+</div>
+    
+
+<script>
+    const fileInput = document.getElementById('file-input');
+    const submitButton = document.querySelector('.submit-button button');
+
+    // Initially disable the submit button
+    submitButton.disabled = true;
+    document.getElementById('upload-image').addEventListener('click', function() {
+        document.getElementById('file-input').click();
+    });
+
+    document.getElementById('file-input').addEventListener('change', function() {
+        const fileList = this.files;
+        const fileNames = Array.from(fileList).map(file => file.name);
+        document.getElementById('selected-files').innerHTML = fileNames.join(', ');
+
+        // Disable or enable the submit button based on whether files are selected
+        submitButton.disabled = !fileList.length;
+    });
+
+    document.getElementById('upload-form').addEventListener('submit', function(event) {
+        event.preventDefault();
+        document.getElementById('loading-spinner').style.display = 'block';
+        submitButton.disabled = true;
+        const formData = new FormData(this);
+        for(let i = 0; i < fileInput.files.length; i++) {
+            formData.append('file[]', fileInput.files[i]);
+        }
+        fileInput.disabled = true;
+        fetch('/ocr', {
+            method: 'POST',
+            body: formData,
+        }).then(response => response.json()).then(data => {
+            document.getElementById('loading-spinner').style.display = 'none';
+            if (data.status === 'success') {
+                window.location.replace('/ocr');
+            } else {
+                document.getElementById('error-message').innerText = data.message;
+                document.getElementById('error-modal').style.display = 'block';
+            }
+        })
+    })
+</script>
+{% endblock %}
